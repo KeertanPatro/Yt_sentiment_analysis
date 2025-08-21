@@ -14,3 +14,7 @@
 2025-08-21 13:19:52,634 - data_ingestion - ERROR - An error occurred in main: Cannot save file into a non-existent directory: 'Data/Raw'
 2025-08-21 13:22:43,934 - data_ingestion - ERROR - An error occurred while saving data: Cannot save file into a non-existent directory: 'Data/Raw'
 2025-08-21 13:22:43,934 - data_ingestion - ERROR - An error occurred in main: Cannot save file into a non-existent directory: 'Data/Raw'
+2025-08-21 17:52:19,153 - data_preprocess - ERROR - KeyError: 'comment_text' - Column not found in DataFrame
+2025-08-21 17:52:19,153 - data_preprocess - ERROR - An error occurred in the main function: 'comment_text'
+2025-08-21 17:53:33,225 - data_preprocess - ERROR - An error occurred while cleaning data: argument of type 'LazyCorpusLoader' is not iterable
+2025-08-21 17:53:33,225 - data_preprocess - ERROR - An error occurred in the main function: argument of type 'LazyCorpusLoader' is not iterable
