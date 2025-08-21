@@ -1,0 +1,16 @@
+2025-08-21 12:56:52,756 - data_ingestion - ERROR - An error occurred in main: 'builtin_function_or_method' object is not subscriptable
+2025-08-21 12:59:34,225 - data_ingestion - ERROR - An error occurred in main: 'builtin_function_or_method' object is not subscriptable
+2025-08-21 13:03:46,950 - data_ingestion - ERROR - An error occurred in main: cannot access local variable 'df' where it is not associated with a value
+2025-08-21 13:05:52,747 - data_ingestion - ERROR - An error occurred in main: cannot access local variable 'df' where it is not associated with a value
+2025-08-21 13:08:48,199 - data_ingestion - ERROR - An error occurred in main: cannot access local variable 'df' where it is not associated with a value
+2025-08-21 13:10:16,179 - data_ingestion - ERROR - An error occurred in main: cannot access local variable 'df' where it is not associated with a value
+2025-08-21 13:16:49,342 - data_ingestion - ERROR - An error occurred while cleaning data: DataFrame.dropna() got an unexpected keyword argument 'inpplace'
+2025-08-21 13:16:49,343 - data_ingestion - ERROR - An error occurred in main: DataFrame.dropna() got an unexpected keyword argument 'inpplace'
+2025-08-21 13:17:32,954 - data_ingestion - ERROR - An error occurred while saving data: Cannot save file into a non-existent directory: 'Data/Raw'
+2025-08-21 13:17:32,954 - data_ingestion - ERROR - An error occurred in main: Cannot save file into a non-existent directory: 'Data/Raw'
+2025-08-21 13:18:51,538 - data_ingestion - ERROR - An error occurred while saving data: Cannot save file into a non-existent directory: 'Data/Raw'
+2025-08-21 13:18:51,538 - data_ingestion - ERROR - An error occurred in main: Cannot save file into a non-existent directory: 'Data/Raw'
+2025-08-21 13:19:52,634 - data_ingestion - ERROR - An error occurred while saving data: Cannot save file into a non-existent directory: 'Data/Raw'
+2025-08-21 13:19:52,634 - data_ingestion - ERROR - An error occurred in main: Cannot save file into a non-existent directory: 'Data/Raw'
+2025-08-21 13:22:43,934 - data_ingestion - ERROR - An error occurred while saving data: Cannot save file into a non-existent directory: 'Data/Raw'
+2025-08-21 13:22:43,934 - data_ingestion - ERROR - An error occurred in main: Cannot save file into a non-existent directory: 'Data/Raw'
