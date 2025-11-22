@@ -77,6 +77,8 @@ def clean_data(train_df,test_df):
         test_df.dropna(inplace=True)
         train_df['processed_text']=train_df['new_clean_comment'].apply(remove_stopwords)
         test_df['processed_text']=test_df['new_clean_comment'].apply(remove_stopwords)
+        train_df['category']=train_df['category'].map({1:1,0:0,-1:2})
+        test_df['category']=test_df['category'].map({1:1,0:0,-1:2})
         return train_df, test_df
     except KeyError as e:
         logger.log(logging.ERROR, f"KeyError: {e} - Column not found in DataFrame")

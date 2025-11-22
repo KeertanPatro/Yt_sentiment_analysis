@@ -5,8 +5,8 @@ stages:
     deps:
     - path: src/Data_scripts/data_ingestion.py
       hash: md5
-      md5: 046f1af638a2c6fba4013ee8e3c98dad
-      size: 3261
+      md5: ef5c257923544be07cd38f15cd151135
+      size: 3252
     params:
       params.yaml:
         data_ingestion.test_size: 0.2
@@ -29,11 +29,57 @@ stages:
       size: 5541654
     - path: src/Data_scripts/data_preprocess.py
       hash: md5
-      md5: c32aa05bfbe01a6652a21d3a6ddcc196
-      size: 3680
+      md5: 21b752a85c22f4152924c1447dd53144
+      size: 3818
     outs:
     - path: Data/Clean
       hash: md5
-      md5: 8fe031b764f42e5611f3937d037fbfc4.dir
-      size: 18513286
+      md5: 9a5f2b39b7e635e83a26e5cb031de765.dir
+      size: 18505225
       nfiles: 2
+  model_building:
+    cmd: python Src/Model_scripts/model_building.py
+    deps:
+    - path: Data/Clean/test_clean.csv
+      hash: md5
+      md5: 87b8e01b1e6ff4a3af583e079b3fd9d7
+      size: 3603679
+    - path: Data/Clean/train_clean.csv
+      hash: md5
+      md5: 70f348928ebb29e9f4a7b6d498b8f6cc
+      size: 14901546
+    - path: src/Model_scripts/model_building.py
+      hash: md5
+      md5: bce149895a11db0fb8e3be2c1e47a53e
+      size: 7184
+    outs:
+    - path: model_config.json
+      hash: md5
+      md5: c494941ba72dfeafd88967594250a959
+      size: 153
+  model_evaluation:
+    cmd: python src/Model_scripts/model_evaluation.py
+    deps:
+    - path: Data/Clean/test_clean.csv
+      hash: md5
+      md5: 87b8e01b1e6ff4a3af583e079b3fd9d7
+      size: 3603679
+    - path: model_config.json
+      hash: md5
+      md5: c494941ba72dfeafd88967594250a959
+      size: 153
+    - path: src/Model_scripts/model_evaluation.py
+      hash: md5
+      md5: 5ce8dc800d0f2178159deb2af137e810
+      size: 6810
+  model_registry:
+    cmd: python src/Model_scripts/model_registry.py
+    deps:
+    - path: model_details.json
+      hash: md5
+      md5: 1d7c2b9460f98f83f05c519e2f681cc8
+      size: 105
+    - path: src/Model_scripts/model_registry.py
+      hash: md5
+      md5: 2c2a49cba35301bb3dd49e4d420deff7
+      size: 2506

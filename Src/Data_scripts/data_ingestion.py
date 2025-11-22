@@ -49,7 +49,6 @@ def clean_data(df):
         return df
     except KeyError as e:
         logger.log(logging.ERROR, f"KeyError: {e} - Column not found in DataFrame")
-        
         raise
     except Exception as e:
         logger.log(logging.ERROR, f"An error occurred while cleaning data: {e}")

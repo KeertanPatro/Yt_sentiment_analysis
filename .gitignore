@@ -208,3 +208,6 @@ __marimo__/
 
 rough.ipynb
 Data
+mlruns
+*.pth
+/model_config.json
