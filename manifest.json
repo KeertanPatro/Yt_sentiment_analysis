@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Comment Analyzer",
+  "version": "1.0",
+  "description": "Analyze YouTube comments with Python NLP",
+  "permissions": ["activeTab"],
+  "action": {
+    "default_popup": "Static/popup.html"
+  },
+  "host_permissions": [
+      "http://127.0.0.1:5000/*",
+      "http://localhost:5000/*"
+  ]
+}

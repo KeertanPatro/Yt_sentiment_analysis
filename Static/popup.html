@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>YouTube Analytics Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-cloud/1.2.7/d3.layout.cloud.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>📊 YouTube Video Analytics Dashboard</h1>
+    <div class="video-title" id="videoTitle"></div>
+    <div class="video-title" id="status"></div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Comments</div>
+        <div class="stat-value" id="totalComments">0</div>
+        <div class="stat-subtext">Analyzed from video</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Likes</div>
+        <div class="stat-value" id="totalLikes">0</div>
+        <div class="stat-subtext">Current count</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Sentiment</div>
+        <div class="stat-value" id="avgSentiment">0</div>
+        <div class="stat-subtext">Range: -1 to +1</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Comment Length</div>
+        <div class="stat-value" id="avgLength">0</div>
+        <div class="stat-subtext">Characters</div>
+      </div>
+    </div>
+    
+    <div class="charts-grid">
+      <div class="chart-card">
+        <h3 class="chart-title">📈 Sentiment Distribution</h3>
+        <div class="chart-container">
+          <canvas id="sentimentChart"></canvas>
+        </div>
+      </div>
+      
+      <div class="chart-card">
+        <h3 class="chart-title">📊 Sentiment Distribution Over Time</h3>
+        <div class="chart-container">
+          <img id="lengthChart" />
+        </div>
+      </div>
+    </div>
+    
+    <div class="chart-card">
+      <h3 class="chart-title">☁️ Word Cloud - Most Frequent Words</h3>
+      <div id="wordcloud"></div>
+      <img id="wordcloudImg"/>
+    </div>
+  </div>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <h3>YouTube Comment Analyzer</h3>
+
+  <button id="analyzeBtn">Analyze Video</button>
+
+  <div id="status"></div>
+
+  <img id="wordcloud" />
+  <img id="sentimentPlot" />
+
+  <script src="popup.js"></script>
+</body>
+</html> -->
