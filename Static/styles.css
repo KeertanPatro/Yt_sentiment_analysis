@@ -13,9 +13,10 @@ body {
 }
 
 .container {
-  max-width: 1400px;
-  margin: 0 auto;
-}
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+  }
 
 h1 {
   text-align: center;
@@ -94,7 +95,7 @@ h1 {
 
 .charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 30px;
   margin-bottom: 30px;
 }
@@ -128,11 +129,12 @@ h1 {
 }
 
 #wordcloud {
-  width: 100%;
-  height: 400px;
-  background: white;
-  border-radius: 12px;
-  border: 2px solid #e8ecf1;
+    width: 100%;
+    height: auto;        
+    min-height: 200px;   
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e8ecf1;
 }
 
 @media (max-width: 768px) {
@@ -148,3 +150,13 @@ h1 {
     font-size: 32px;
   }
 }
+
+html, body {
+    width: fit-content;
+    min-width: 420px;     
+    max-width: 800px;     
+}
+img, canvas {
+    max-width: 100%;
+    height: auto;
+  }
