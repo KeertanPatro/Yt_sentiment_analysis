@@ -8,7 +8,6 @@ stages:
       - Data/trained_comment_ids.json
 
   data_check:
-    cmd: python Src/data_check.py
+    cmd: python data_check.py
     deps:
-      - Src/data_check.py
-      - Data/trained_comment_ids.json
+      - data_check.py

@@ -57,7 +57,7 @@ def main():
     if trained_data_paths is not None:
         train_df=pd.DataFrame()
         for file in trained_data_paths:
-            train_df=pd.concat([pd.read_parquet(file)],train_df)
+            train_df=pd.concat([pd.read_parquet(file),train_df])
     else:
         train_df=None
 

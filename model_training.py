@@ -20,6 +20,12 @@ from mlflow.tracking import MlflowClient
 from dotenv import load_dotenv
 from Src.download_upload_scripts import get_data_s3,get_token_s3,save_vocab_s3
 import yaml
+import datetime
+
+cur_date=datetime.datetime.now()
+cur_date=cur_date.strftime('%Y-%m-%d')
+
+
 try:
   load_dotenv()
 except:
@@ -27,8 +33,12 @@ except:
 
 with open('params.yaml', 'r') as file:
     params = yaml.safe_load(file)
+
 num_epochs=params.get('model_training').get('num_epochs')
-batch_size=params.get('model_training').get('num_epochs')
+batch_size=params.get('model_training').get('batch_size')
+max_length=params.get('model_training').get('max_padding_length')
+max_vocab_length=params.get('model_training').get('max_vocab')
+
 
 model_path="cardiffnlp/twitter-roberta-base-sentiment-latest"
 
@@ -86,11 +96,10 @@ device="cuda" if torch.cuda.is_available() else "cpu"
 
 
 
-vocab,max_length=get_token_s3(path='token_info.json',bucket_name='youtube-training-data')
+vocab,max_length_=get_token_s3(path='token_info.json',bucket_name='youtube-training-data')
 if not vocab:
    vocab={'<pad>':0,'<unk>':1}
-   max_length=None
-max_length=97
+
     
 
 
@@ -133,13 +142,18 @@ class Tokenizer:
         self.unk=vocab['<unk>']
     
     def fit_on_texts(self,texts:list):
+        status=False
         for text in texts:
             for word in text.split():
                 word=word.strip()
-                if word not in self.vocab:
-                    self.vocab[word]=len(self.vocab)
-    
-        
+                if len(word)<30:
+                  if word not in self.vocab:
+                      if len(self.vocab)>=max_vocab_length:
+                          status=True
+                          break
+                      self.vocab[word]=len(self.vocab)
+            if status:
+                break
 
     def texts_to_sequences(self,texts:list):
         sequences=[]
@@ -230,7 +244,6 @@ def train_model(train_dataloader,vocab_size,embedding_dim=128,hidden_dim=64):
     criterion=nn.CrossEntropyLoss()
     lr=0.001
     optimizer=optim.Adam(model.parameters(),lr=lr)
-    num_epochs=3
     model.train()
     logger.log(logging.INFO,"Training started")
     for epoch in range(num_epochs):
@@ -280,10 +293,10 @@ def upload_model_to_mlflow(model):
       mlflow.pytorch.log_model(
           model,
           artifact_path="model",
-          registered_model_name="sentiment_pytorch_model"
+          registered_model_name=f"sentiment_pytorch_model_{cur_date}"
       )
     client.transition_model_version_stage(
-      name="sentiment_pytorch_model",
+      name=f"sentiment_pytorch_model_{cur_date}",
       stage="Production",
       version=1,
       archive_existing_versions=True
@@ -357,12 +370,7 @@ def main():
   except Exception as e:
     logger.log(logging.ERROR,f"An error occurred while saving trained comment ids: {e}")
     raise
-  if not max_length:
-     comments_len=[len(comment) for comment in train_df['comment_text']]
-     max_len=int(np.percentile(comments_len,95))
-  else:
-     max_len=max_length
-  tokenizer=Tokenizer(vocab,max_len)
+  tokenizer=Tokenizer(vocab,max_length)
   train_dataloader,test_dataloader=get_train_test_dataloader(train_df,test_df,batch_size,tokenizer)
   
   try:

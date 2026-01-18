@@ -1,0 +1,25 @@
+schema: '2.0'
+stages:
+  model_training:
+    cmd: python model_training.py
+    deps:
+    - path: model_training.py
+      hash: md5
+      md5: 835c10c839aa8f20fbc52996026964b4
+      size: 12554
+    outs:
+    - path: Data/token_info.json
+      hash: md5
+      md5: 62aa7831226c5a8b34f8eacbae3bc32d
+      size: 765758
+    - path: Data/trained_comment_ids.json
+      hash: md5
+      md5: 019d54558723b439f42d7b014b3798d1
+      size: 808974
+  data_check:
+    cmd: python data_check.py
+    deps:
+    - path: data_check.py
+      hash: md5
+      md5: 64116caea1e4257d377d52117a099b9f
+      size: 2400

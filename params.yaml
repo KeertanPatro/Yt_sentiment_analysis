@@ -1,3 +1,5 @@
 model_training:
-  num_epochs: 5
+  num_epochs: 8
   batch_size: 64
+  max_vocab: 46578
+  max_padding_length: 97
