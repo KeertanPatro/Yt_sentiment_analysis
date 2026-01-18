@@ -1,0 +1,14 @@
+stages:
+  model_training:
+    cmd: python model_training.py
+    deps:
+      - model_training.py
+    outs:
+      - Data/token_info.json
+      - Data/trained_comment_ids.json
+
+  data_check:
+    cmd: python Src/data_check.py
+    deps:
+      - Src/data_check.py
+      - Data/trained_comment_ids.json

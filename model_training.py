@@ -11,8 +11,6 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from tqdm import tqdm
 import json
 import yaml
-import os
-import boto3
 import nltk
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
@@ -20,12 +18,17 @@ import re
 import mlflow
 from mlflow.tracking import MlflowClient
 from dotenv import load_dotenv
-from download_upload_scripts import get_data_s3,get_token_s3,save_vocab_s3
+from Src.download_upload_scripts import get_data_s3,get_token_s3,save_vocab_s3
+import yaml
 try:
   load_dotenv()
 except:
   pass
 
+with open('params.yaml', 'r') as file:
+    params = yaml.safe_load(file)
+num_epochs=params.get('model_training').get('num_epochs')
+batch_size=params.get('model_training').get('num_epochs')
 
 model_path="cardiffnlp/twitter-roberta-base-sentiment-latest"
 
@@ -44,7 +47,7 @@ current_model = mlflow.pytorch.load_model(
     model_uri=source_path,
     map_location="cpu"  
 )
-
+print("Here")
 
 
 
@@ -83,9 +86,11 @@ device="cuda" if torch.cuda.is_available() else "cpu"
 
 
 
-vocab,max_length=get_token_s3(path='token_info.json')
+vocab,max_length=get_token_s3(path='token_info.json',bucket_name='youtube-training-data')
 if not vocab:
    vocab={'<pad>':0,'<unk>':1}
+   max_length=None
+max_length=97
     
 
 
@@ -159,14 +164,13 @@ class Tokenizer:
 def text_to_vec(df,tokenizer,type="test"):
     try:
         try:
+            if type=="train":
+              tokenizer.fit_on_texts(df['comment_text'].to_list())               
             X=tokenizer.texts_to_sequences(df['comment_text'])
         except:
             logger.log(logging.ERROR,"Error in converting text to sequence")
             raise
         y=np.array(df['sentiment_category'])
-        if type=="train":
-            vocab=tokenizer.word_index
-            return X,y,len(tokenizer.vocab)
         return X,y
     except Exception as e:
         logger.log(logging.ERROR,f"An error occurred while converting text to vector: {e}")
@@ -202,7 +206,7 @@ class Lstm_model(nn.Module):
 def get_train_test_dataloader(train_df,test_df,batch_size,tokenizer):
     try:
         
-        X_train,y_train,vocab_size=text_to_vec(df=train_df,type="train",tokenizer=tokenizer)
+        X_train,y_train=text_to_vec(df=train_df,type="train",tokenizer=tokenizer)
         X_test,y_test=text_to_vec(df=test_df,tokenizer=tokenizer)
         X_train=torch.tensor(X_train,dtype=torch.long).to(device)
         y_train=torch.tensor(y_train,dtype=torch.long).to(device)
@@ -210,11 +214,10 @@ def get_train_test_dataloader(train_df,test_df,batch_size,tokenizer):
         y_test= torch.tensor(y_test,dtype=torch.long).to(device)
         train_dataset=TensorDataset(X_train,y_train)
         test_dataset=TensorDataset(X_test,y_test)
-        batch_size=64
         train_dataloader=DataLoader(train_dataset,batch_size=batch_size,shuffle=True)
         test_dataloader=DataLoader(test_dataset,batch_size=batch_size,shuffle=True)
         logger.log(logging.INFO,"Train and test dataloaders created successfully")
-        return train_dataloader,test_dataloader,vocab_size
+        return train_dataloader,test_dataloader
     except Exception as e:
         logger.log(logging.ERROR,f"An error occurred while creating train and test dataloaders: {e}")
         raise
@@ -227,7 +230,7 @@ def train_model(train_dataloader,vocab_size,embedding_dim=128,hidden_dim=64):
     criterion=nn.CrossEntropyLoss()
     lr=0.001
     optimizer=optim.Adam(model.parameters(),lr=lr)
-    num_epochs=1
+    num_epochs=3
     model.train()
     logger.log(logging.INFO,"Training started")
     for epoch in range(num_epochs):
@@ -280,21 +283,27 @@ def upload_model_to_mlflow(model):
           registered_model_name="sentiment_pytorch_model"
       )
     client.transition_model_version_stage(
-      "sentiment_pytorch_model",
-      "Production",
+      name="sentiment_pytorch_model",
+      stage="Production",
+      version=1,
       archive_existing_versions=True
     )
     logger.log(logging.INFO,"Model uploaded to MLflow successfully")
     return True
   except Exception as e:
-    logger.log(logging.ERROR,"An error occurred while uploading model to MLflow")
+    logger.log(logging.ERROR,f"An error occurred while uploading model to MLflow, {e}")
     raise
 
 def get_data_labelled(df):
    # get non labelled Data
+   global model_Master
+   global tokenizer_pretrained
    temp_df=df.loc[df['sentiment_category'].isna()]
    if temp_df.empty:
       logger.log(logging.INFO,"No unlabelled data found")
+      df['sentiment_category']=df['sentiment_category'].map({0:0,1:1,-1:2})
+      del model_Master
+      del tokenizer_pretrained
       return df
    else:
         with torch.no_grad():
@@ -305,6 +314,9 @@ def get_data_labelled(df):
             sent_cat=torch.argmax(scores,dim=1)
             df['sentiment_category']=sent_cat.numpy()
             df['sentiment_category']=temp_df['sentiment_category'].map({0:2,1:1,2:0})
+            del model_Master
+            del tokenizer_pretrained
+            del temp_df
             return df
    
    
@@ -339,29 +351,37 @@ def main():
 
   try:
     comment_ids_trained=train_df['comment_id'].to_list()
+    with open('Data/trained_comment_ids.json','w') as f:  
+      json.dump(comment_ids_trained,f)
     logger.log(logging.INFO,"Trained comment ids saved successfully")
   except Exception as e:
     logger.log(logging.ERROR,f"An error occurred while saving trained comment ids: {e}")
     raise
   if not max_length:
      comments_len=[len(comment) for comment in train_df['comment_text']]
-     max_length=int(np.percentile(comments_len,95))
-  tokenizer=Tokenizer(vocab,max_length)
-  train_dataloader,test_dataloader,vocab_size=get_train_test_dataloader(train_df,test_df,tokenizer)
+     max_len=int(np.percentile(comments_len,95))
+  else:
+     max_len=max_length
+  tokenizer=Tokenizer(vocab,max_len)
+  train_dataloader,test_dataloader=get_train_test_dataloader(train_df,test_df,batch_size,tokenizer)
   
   try:
-    save_vocab_s3(path='../Data/token_info.json',vocab=tokenizer.vocab,max_len=max_length)
+    save_vocab_s3(path='Data/token_info.json',vocab=tokenizer.vocab,max_len=tokenizer.max_len)
+    logger.log(logging.INFO,"Vocab saved to S3 successfully")
   except Exception as e:
     logger.log(logging.ERROR,f"An error occurred while saving vocab to S3: {e}")
     raise
   
   try:
-    new_model=train_model(train_dataloader,vocab_size)
+    new_model=train_model(train_dataloader,len(tokenizer.vocab))
   except Exception as e:
     logger.log(logging.ERROR,f"An error occurred while training the model: {e}")
     raise
-  report_new,y_true_new,y_pred_new=evaluate_model(new_model,test_dataloader)
+  del train_dataloader
+  del tokenizer
   report_old,y_true_old,y_pred_old=evaluate_model(current_model,test_dataloader)
+  report_new,y_true_new,y_pred_new=evaluate_model(new_model,test_dataloader)
+  
   
   if report_old['accuracy']<report_new['accuracy']:
     mlflow.pytorch.log_model(new_model,artifact_path="lstm_model")
@@ -369,9 +389,10 @@ def main():
   else:
      print("Existing model outperformed the new model. No update made.")
      logger.log(logging.INFO,"Existing model outperformed the new model. No update made.")
-  
-  with open('../Data/trained_comment_ids.json','w') as f:
-    json.dump(comment_ids_trained,f)
+
+
+if __name__=="__main__":
+    main()
     
 
 

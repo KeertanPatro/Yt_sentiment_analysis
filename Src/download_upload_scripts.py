@@ -8,13 +8,14 @@ s3_resource= boto3.resource('s3',aws_access_key_id=os.environ.get('AWS_ACCESS_KE
 
 def get_token_s3(path,bucket_name):
     try:
-      s3_client.download_file(bucket_name,path,'../Data/vocab.json')
-      with open('../Data/token_info.json','r') as f:
+      s3_client.download_file(bucket_name,path,'Data/token_info.json')
+      with open('Data/token_info.json','r') as f:
         token_info=json.load(f)
         vocab=token_info['vocab']
         max_length=token_info['max_length']  
       return vocab,max_length
     except Exception as e:
+      print(f"Error downloading token info: {e}")
       return None,None
 
 
@@ -31,23 +32,25 @@ def get_all_files(bucket_name='youtube-training-data',folder_type=None):
   bucket = s3_resource.Bucket(bucket_name)
   if folder_type:
     for file in bucket.objects.filter(Prefix=folder_type):
-        files.append(file)
+        files.append(file.key)
   else:
     for obj in bucket.objects.all():
         files.append(obj.key)
   return files
 
 
-def get_data_s3(folder_type=None,bucket_name='youtube-training-data',file_path=None,local_path="../Data/"):
+def get_data_s3(folder_type=None,bucket_name='youtube-training-data',file_path=None,local_path="Data/"):
   if folder_type:
     files=get_all_files(bucket_name=bucket_name,folder_type=folder_type)
-    file_name=file_path.split('/')[-1]
     local_file_paths=[]
     for file in files:
-      if os.path.exists(local_path+file_name):
-        s3_client.download_file(bucket_name,file.key,local_path+file_name)
+      file_name=file.split('/')[-1]
+      if not os.path.exists(local_path+file_name):
+        s3_client.download_file(bucket_name,file,local_path+file_name)
         local_file_paths.append(local_path+file_name)
         return local_file_paths
       else:
-        print("File path does not exist")
+        print("File path already exists no need")
+        local_file_paths.append(local_path+file_name)
+        return local_file_paths
 
