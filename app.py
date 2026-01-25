@@ -43,7 +43,6 @@ YOUTUBE_API_VERSION = 'v3'
 
 
 category_mapping={0:'Positive',1:'Neutral',2:'Negative'}
-df=pd.read_csv('Data/Clean/train_clean.csv')
 app=FastAPI()
 
 
@@ -66,11 +65,13 @@ def collect_and_upload_data(s3_comments):
     df=pd.DataFrame()
     untrained_data_paths=get_data_s3(folder_type='Untrained')
     for path in untrained_data_paths:
-        temp_df=pd.DataFrame(path)
+        temp_df=pd.read_parquet(path)
         df=pd.concat([temp_df,df])
         new_df=pd.DataFrame(s3_comments)
         df=pd.concat([new_df,df])
         df=df.loc[~df.duplicated(subset=['comment_id'],keep='first')]
+        df.loc[:, 'created_at'] = pd.to_datetime(df['created_at'], errors='coerce')
+        df.loc[:, 'updated_at'] = pd.to_datetime(df['updated_at'], errors='coerce')
         df.to_parquet('Data/Untrained_comments.parquet')
         upload_to_s3('Untrained',file_name='Untrained_comments.parquet',local_filepath='Data/Untrained_comments.parquet')
     print("Upload done!!")
@@ -283,6 +284,6 @@ async def predict(request:Request):
             'avgLength':avg_length,
             'wordcloud': wordcloud_base64,
             'sentimentTime':sentiment_score_dist_plot,
-            "sentimentDist":{'Positive':sentiment_vals['Positive'],'Neutral':sentiment_vals['Neutral'],'Negative':sentiment_vals['Negative']}
+            "sentimentDist":{'Positive':sentiment_vals.get('Positive',0),'Neutral':sentiment_vals.get('Neutral',0),'Negative':sentiment_vals.get('Negative',0)}
         }
     return response

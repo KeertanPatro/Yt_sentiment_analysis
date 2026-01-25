@@ -17,8 +17,8 @@ s3_client= boto3.client('s3',aws_access_key_id=os.environ.get('AWS_ACCESS_KEY_ID
 
 def get_token_s3(path,bucket_name):
     try:
-      s3_client.download_file(bucket_name,path,'../Data/vocab.json')
-      with open('../Data/token_info.json','r') as f:
+      s3_client.download_file(bucket_name,path,'Data/vocab.json')
+      with open('Data/vocab.json','r') as f:
         token_info=json.load(f)
         vocab=token_info['vocab']  
       return vocab
