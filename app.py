@@ -1,11 +1,9 @@
 from fastapi import FastAPI,Request
-from Src.Data_scripts.data_preprocess import pre_process,remove_stopwords
-from Src.Model_scripts.model_building import Lstm_model,get_tokenizer
+from Src.model_building import text_to_vec
+from Src.download_upload_s3 import get_data_s3,upload_to_s3
 import json
 import pandas as pd
 import logging
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-from torch.utils.data import dataset,DataLoader,TensorDataset
 import io
 import base64
 import torch
@@ -19,9 +17,24 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from collections import Counter
 from datetime import datetime
-load_dotenv()
+from concurrent.futures import ThreadPoolExecutor
+import mlflow
+from mlflow.tracking import MlflowClient
+executor=ThreadPoolExecutor(max_workers=4)
+try:
+    load_dotenv()
+except:
+    pass
 
 
+mlflow.set_tracking_uri("http://ec2-52-23-156-179.compute-1.amazonaws.com:5000")
+client = MlflowClient()
+models = client.search_registered_models()
+source_path=models[0].latest_versions[0].source
+model = mlflow.pytorch.load_model(
+    model_uri=source_path,
+    map_location="cpu"  
+)
 
 
 YOUTUBE_API_KEY = os.environ.get('YOUTUBE_API_KEY')
@@ -32,13 +45,6 @@ YOUTUBE_API_VERSION = 'v3'
 category_mapping={0:'Positive',1:'Neutral',2:'Negative'}
 df=pd.read_csv('Data/Clean/train_clean.csv')
 app=FastAPI()
-configs=json.load(open('model_config.json','r'))
-vocab_size=configs['vocab_size']
-embedding_dim=configs['embedding_dim']
-hidden_dim=configs['hidden_dim']
-model=Lstm_model(vocab_size,embedding_dim=embedding_dim,hidden_dim=hidden_dim,output_dim=3)
-model.load_state_dict(torch.load('./lstm_model.pth'))
-tokenizer=get_tokenizer(df)
 
 
 
@@ -54,6 +60,21 @@ file_handler.setLevel(logging.ERROR)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 console_handler.setFormatter(formatter)
 file_handler.setFormatter(formatter)
+
+
+def collect_and_upload_data(s3_comments):
+    df=pd.DataFrame()
+    untrained_data_paths=get_data_s3(folder_type='Untrained')
+    for path in untrained_data_paths:
+        temp_df=pd.DataFrame(path)
+        df=pd.concat([temp_df,df])
+        new_df=pd.DataFrame(s3_comments)
+        df=pd.concat([new_df,df])
+        df=df.loc[~df.duplicated(subset=['comment_id'],keep='first')]
+        df.to_parquet('Data/Untrained_comments.parquet')
+        upload_to_s3('Untrained',file_name='Untrained_comments.parquet',local_filepath='Data/Untrained_comments.parquet')
+    print("Upload done!!")
+    os.remove('Data/Untrained_comments.parquet')
 
 def sentiment_score_calc(val):
     y_pred=model(val)
@@ -91,6 +112,7 @@ def get_youtube_comments(video_id,max_results=100):
         )
         
         comments = []
+        s3_comments=[]
         stat_request=youtube.videos().list(
             part="statistics",
             id=video_id
@@ -120,6 +142,15 @@ def get_youtube_comments(video_id,max_results=100):
                     'published_at': comment['publishedAt'],
                     'date_month':datetime.strptime(comment['publishedAt'],"%Y-%m-%dT%H:%M:%SZ").strftime('%Y-%m')
                 })
+                s3_comments.append({
+                    'comment_id':item['id'],
+                    'video_id':video_id,
+                    'comment_text':comment['textDisplay'],
+                    'updated_at':comment['updatedAt'],
+                    'created_at':comment['publishedAt'],
+                    'training_status':0,
+                    'sentiment_category':pd.NA
+                })
             
             if 'nextPageToken' in response and len(comments) < max_results:
                 request = youtube.commentThreads().list(
@@ -132,6 +163,8 @@ def get_youtube_comments(video_id,max_results=100):
                 )
             else:
                 break
+        executor.submit(collect_and_upload_data,s3_comments)
+        del s3_comments
         video_dict['comments']=comments
         return video_dict
 
@@ -187,24 +220,7 @@ def generate_wordcloud(comments:list):
     
 
 
-def text_to_vec(text,max_len=900):
-    try:
-        try:
-            X=tokenizer.texts_to_sequences(text)
-        except:
-            logger.log(logging.ERROR,"Error in converting text to sequence")
-            raise
-        try:
-            X=pad_sequences(X,maxlen=max_len)
-            X=torch.tensor(X,dtype=torch.long)
-        except Exception as e:
-            logger.log(logging.ERROR,f"Error in padding sequences:{e}")
-            raise
-        return X
 
-    except Exception as e:
-        logger.log(logging.ERROR,f"An error occurred while converting text to vector: {e}")
-        raise
 
 # device='cpu'
 # def get_train_test_dataloader(tests,batch_size=4):

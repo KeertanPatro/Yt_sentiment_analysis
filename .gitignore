@@ -212,3 +212,4 @@ mlruns
 *.pth
 /model_config.json
 Notebooks
+.vscode
