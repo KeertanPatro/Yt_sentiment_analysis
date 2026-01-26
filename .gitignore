@@ -207,9 +207,9 @@ marimo/_lsp/
 __marimo__/
 
 rough.ipynb
-Data
 mlruns
 *.pth
 /model_config.json
 Notebooks
 .vscode
+Data
