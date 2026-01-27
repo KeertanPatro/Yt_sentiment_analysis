@@ -1,0 +1,18 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR
+      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 427521931174.dkr.ecr.us-east-1.amazonaws.com/yt_sentiment_analysis
+
+  build:
+    commands:
+      - echo Building Docker image
+      - docker build -t yt_sentiment_analysis .
+
+  post_build:
+    commands:
+      - echo Tagging and pushing image
+      - docker tag yt_sentiment_analysis:latest 427521931174.dkr.ecr.us-east-1.amazonaws.com/yt_sentiment_analysis:latest
+      - docker push 427521931174.dkr.ecr.us-east-1.amazonaws.com/yt_sentiment_analysis:latest
