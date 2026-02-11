@@ -1,6 +1,4 @@
 from fastapi import FastAPI,Request
-from Src.model_building import text_to_vec
-from Src.download_upload_s3 import get_data_s3,upload_to_s3
 import json
 import pandas as pd
 import logging
@@ -11,6 +9,10 @@ import os
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from dotenv import load_dotenv
+try:
+    load_dotenv()
+except:
+    pass
 from wordcloud import WordCloud
 import matplotlib
 matplotlib.use('Agg')
@@ -20,11 +22,10 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 import mlflow
 from mlflow.tracking import MlflowClient
+from Src.model_building import text_to_vec
+from Src.download_upload_s3 import get_data_s3,upload_to_s3
 executor=ThreadPoolExecutor(max_workers=4)
-try:
-    load_dotenv()
-except:
-    pass
+
 
 
 mlflow.set_tracking_uri("http://ec2-52-23-156-179.compute-1.amazonaws.com:5000")
