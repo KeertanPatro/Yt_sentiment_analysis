@@ -288,3 +288,7 @@ async def predict(request:Request):
             "sentimentDist":{'Positive':sentiment_vals.get('Positive',0),'Neutral':sentiment_vals.get('Neutral',0),'Negative':sentiment_vals.get('Negative',0)}
         }
     return response
+
+@app.get("/")
+def health():
+    return {"message":"API is healthy and running!!"}
