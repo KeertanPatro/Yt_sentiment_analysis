@@ -70,10 +70,10 @@ jobs:
         run: |
           echo "Triggering ECS deployment..."
           aws ecs update-service \
-            --cluster ${{ secrets.ECS_CLUSTER }} \
-            --service ${{ secrets.ECS_SERVICE }} \
+            --cluster "yt-sentiment-analysis-production" \
+            --service "yt-sentiment-analysis-task-service-l01uy9xm" \
             --force-new-deployment \
-            --region ${{ secrets.AWS_REGION }}
+            --region "us-east-1"
           
       # Step 9: Wait for ECS deployment to complete
       - name: Wait for service stability
