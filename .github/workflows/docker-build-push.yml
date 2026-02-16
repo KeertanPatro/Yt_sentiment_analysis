@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build, Push to DockerHub, and Deploy to ECS
 
 on:
   push:
@@ -9,45 +9,85 @@ on:
       - main
 
 jobs:
-  build-and-push:
+  deploy:
     runs-on: ubuntu-latest
     
     steps:
+      # Step 1: Checkout code from repository
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Step 2: Configure AWS credentials for ECS deployment
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      # Step 3: Set up Docker Buildx for advanced builds
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Step 4: Login to DockerHub
       - name: Log in to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Step 5: Extract metadata for Docker tags
       - name: Extract metadata for Docker
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/yt-sentiment-analysis
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/sentiment-analysis
           tags: |
             type=ref,event=branch
             type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
             type=sha,prefix={{branch}}-
             type=raw,value=latest,enable={{is_default_branch}}
 
+      # Step 6: Build and push Docker image to DockerHub
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/sentiment-analysis:buildcache
           cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/sentiment-analysis:buildcache,mode=max
 
+      # Step 7: Show image digest for verification
       - name: Image digest
         run: echo ${{ steps.meta.outputs.digest }}
+
+      # Step 8: Force ECS service to deploy new image (only on main branch push)
+      - name: Force ECS service update
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "Triggering ECS deployment..."
+          aws ecs update-service \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --service ${{ secrets.ECS_SERVICE }} \
+            --force-new-deployment \
+            --region ${{ secrets.AWS_REGION }}
+          
+      # Step 9: Wait for ECS deployment to complete
+      - name: Wait for service stability
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "Waiting for ECS service to stabilize..."
+          aws ecs wait services-stable \
+            --cluster ${{ secrets.ECS_CLUSTER }} \
+            --services ${{ secrets.ECS_SERVICE }} \
+            --region ${{ secrets.AWS_REGION }}
+
+      # Step 10: Deployment complete notification
+      - name: Deployment complete
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "✅ Deployment to ECS completed successfully!"
+          echo "🚀 Your application is now live on production!"
