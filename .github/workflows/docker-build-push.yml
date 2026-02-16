@@ -23,7 +23,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: "us-east-1"
 
       # Step 3: Set up Docker Buildx for advanced builds
       - name: Set up Docker Buildx
@@ -81,9 +81,9 @@ jobs:
         run: |
           echo "Waiting for ECS service to stabilize..."
           aws ecs wait services-stable \
-            --cluster ${{ secrets.ECS_CLUSTER }} \
-            --services ${{ secrets.ECS_SERVICE }} \
-            --region ${{ secrets.AWS_REGION }}
+            --cluster "yt-sentiment-analysis-production" \
+            --services "yt-sentiment-analysis-task-service-l01uy9xm" \
+            --region "us-east-1"
 
       # Step 10: Deployment complete notification
       - name: Deployment complete
