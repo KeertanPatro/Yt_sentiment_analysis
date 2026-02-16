@@ -292,3 +292,7 @@ async def predict(request:Request):
 @app.get("/")
 def health():
     return {"message":"API is healthy and running!!"}
+
+@app.get("/code_flow")
+def new_flow():
+    return {"message":"This is the new code flow!!"}
