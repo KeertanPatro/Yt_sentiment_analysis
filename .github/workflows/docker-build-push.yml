@@ -75,15 +75,15 @@ jobs:
             --force-new-deployment \
             --region "us-east-1"
           
-      # Step 9: Wait for ECS deployment to complete
-      - name: Wait for service stability
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: |
-          echo "Waiting for ECS service to stabilize..."
-          aws ecs wait services-stable \
-            --cluster "yt-sentiment-analysis-production" \
-            --services "yt-sentiment-analysis-task-service-l01uy9xm" \
-            --region "us-east-1"
+      # # Step 9: Wait for ECS deployment to complete
+      # - name: Wait for service stability
+      #   if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      #   run: |
+      #     echo "Waiting for ECS service to stabilize..."
+      #     aws ecs wait services-stable \
+      #       --cluster "yt-sentiment-analysis-production" \
+      #       --services "yt-sentiment-analysis-task-service-l01uy9xm" \
+      #       --region "us-east-1"
 
       # Step 10: Deployment complete notification
       - name: Deployment complete
