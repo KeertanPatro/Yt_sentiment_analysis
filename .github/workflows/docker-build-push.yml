@@ -41,7 +41,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/sentiment-analysis
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/yt-sentiment-analysis
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -66,7 +66,7 @@ jobs:
 
       # Step 8: Force ECS service to deploy new image (only on main branch push)
       - name: Force ECS service update
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'h
         run: |
           echo "Triggering ECS deployment..."
           aws ecs update-service \
